@@ -38,7 +38,7 @@ github_repo: "https://github.com/Aj2280/Intelligent-Candidate-Discovery.git"
 
 sandbox_link: "https://huggingface.co/spaces/Abhi2280/Intelligent-Candidate-Discovery"
 
-reproduce_command: "python rank.py --candidates ./candidates.jsonl --out ./team_xxx.csv"
+reproduce_command: "python3 rank.py --candidates candidates.jsonl --out team_submission.csv && python3 validate_submission.py team_submission.csv"
 
 # ============================================================================
 # Compute environment
