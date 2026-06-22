@@ -17,4 +17,4 @@ pyyaml==6.0.1
 rich==13.7.1
 
 # Sandbox / demo (HuggingFace Spaces)
-gradio==4.37.2
+gradio>=4.37.2
