@@ -1,0 +1,75 @@
+# Redrob Hackathon — Submission Metadata Template
+#
+# Copy this file to your repo root as `submission_metadata.yaml` and fill it in.
+# The fields here should match what you submit via the portal at upload time.
+# Stage 3 review uses this file to verify your portal metadata.
+
+# ============================================================================
+# Team identity
+# ============================================================================
+team_name: "FILL_THIS_IN"  # Used in leaderboard and announcements
+
+primary_contact:
+  name: "FILL_THIS_IN"
+  email: "FILL_THIS_IN@example.com"   # Used for all organizer communication
+  phone: "+91-XXXXXXXXXX"        # Used for top-50 / top-10 outreach
+
+team_members:
+  - name: "FILL_THIS_IN"
+    email: "FILL_THIS_IN@example.com"
+    role: "ML Engineer"          # Optional, e.g. "Team Lead", "Backend", "Data"
+
+# ============================================================================
+# Code and reproducibility
+# ============================================================================
+github_repo: "https://github.com/FILL_THIS_IN/FILL_THIS_IN"
+
+sandbox_link: "https://huggingface.co/spaces/FILL_THIS_IN/redrob-ranker"
+
+reproduce_command: "python rank.py --candidates ./candidates.jsonl --out ./team_xxx.csv"
+
+# ============================================================================
+# Compute environment
+# ============================================================================
+compute:
+  platform: "Local CPU"                         # Or: "AWS EC2 c5.4xlarge", "Local Linux box", etc.
+  cpu_cores: 8                                  # Number of CPU cores used
+  ram_gb: 16                                    # Available RAM in GB
+  python_version: "3.10"                        # python --version
+  os: "macOS 14"                                # Or "Ubuntu 22.04 LTS", etc.
+  uses_gpu_for_inference: false                 # Must be false — see compute constraints
+  has_network_during_ranking: false             # Must be false — no API calls during ranking
+  pre_computation_required: true                # true if you pre-compute embeddings or train models offline
+  pre_computation_time_minutes: 10              # Approximate, if applicable
+
+# ============================================================================
+# AI tools declaration
+# ============================================================================
+ai_tools_used:
+  - "Gemini"        # e.g. for architecture discussion, code review
+
+ai_usage_summary: |
+  Used Gemini as an agentic assistant to architect and implement the ranking engine,
+  build test suites, and audit the logic against the JD requirements. All logic executes locally.
+
+# ============================================================================
+# Approach summary (optional but recommended)
+# ============================================================================
+methodology_summary: |
+  A two-stage hybrid ranker designed to balance JD alignment with platform engagement signals.
+  Stage 1: Candidates are scored on 55% feature signals (title matching, skills duration decay,
+  experience sweet-spot, education) and 45% semantic similarity (SentenceTransformers). A behavioral
+  multiplier penalizes disengaged candidates (e.g. 90-day notice, low response rate, remote-only).
+  Honeypot detection filters impossible profiles.
+  Stage 2: Candidates in the top 15% of both feature and semantic scores receive an 8% boost
+  to surface true multi-dimensional fits.
+
+# ============================================================================
+# Declarations
+# ============================================================================
+declarations:
+  read_submission_spec: true        # I have read submission_spec.md in full
+  code_is_original_work: true       # My code is my team's original work (using AI as a tool is fine)
+  no_collusion: true                # I have not coordinated my submission with other teams
+  honeypot_check_done: true         # OPTIONAL — set true if you explicitly checked for honeypots in your ranking
+  reproduction_tested: true         # I have tested that my reproduce_command runs end-to-end

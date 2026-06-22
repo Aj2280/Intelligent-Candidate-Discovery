@@ -1,0 +1,241 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Redrob Candidate Profile Schema",
+  "description": "Schema for a single candidate profile in the Intelligent Candidate Discovery & Ranking Challenge dataset.",
+  "type": "object",
+  "required": [
+    "candidate_id",
+    "profile",
+    "career_history",
+    "education",
+    "skills",
+    "redrob_signals"
+  ],
+  "properties": {
+    "candidate_id": {
+      "type": "string",
+      "pattern": "^CAND_[0-9]{7}$",
+      "description": "Unique identifier for the candidate. Format: CAND_XXXXXXX (7 digits)."
+    },
+    "profile": {
+      "type": "object",
+      "required": [
+        "anonymized_name",
+        "headline",
+        "summary",
+        "location",
+        "country",
+        "years_of_experience",
+        "current_title",
+        "current_company",
+        "current_company_size",
+        "current_industry"
+      ],
+      "properties": {
+        "anonymized_name": { "type": "string", "description": "Anonymized full name." },
+        "headline": { "type": "string", "description": "One-line professional headline." },
+        "summary": { "type": "string", "description": "Multi-sentence professional summary." },
+        "location": { "type": "string", "description": "City, region/state." },
+        "country": { "type": "string" },
+        "years_of_experience": { "type": "number", "minimum": 0, "maximum": 50 },
+        "current_title": { "type": "string" },
+        "current_company": { "type": "string" },
+        "current_company_size": {
+          "type": "string",
+          "enum": ["1-10", "11-50", "51-200", "201-500", "501-1000", "1001-5000", "5001-10000", "10001+"]
+        },
+        "current_industry": { "type": "string" }
+      }
+    },
+    "career_history": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 10,
+      "items": {
+        "type": "object",
+        "required": ["company", "title", "start_date", "end_date", "duration_months", "is_current", "industry", "company_size", "description"],
+        "properties": {
+          "company": { "type": "string" },
+          "title": { "type": "string" },
+          "start_date": { "type": "string", "format": "date" },
+          "end_date": { "type": ["string", "null"], "format": "date" },
+          "duration_months": { "type": "integer", "minimum": 0 },
+          "is_current": { "type": "boolean" },
+          "industry": { "type": "string" },
+          "company_size": {
+            "type": "string",
+            "enum": ["1-10", "11-50", "51-200", "201-500", "501-1000", "1001-5000", "5001-10000", "10001+"]
+          },
+          "description": { "type": "string", "description": "Role responsibilities and achievements." }
+        }
+      }
+    },
+    "education": {
+      "type": "array",
+      "minItems": 0,
+      "maxItems": 5,
+      "items": {
+        "type": "object",
+        "required": ["institution", "degree", "field_of_study", "start_year", "end_year"],
+        "properties": {
+          "institution": { "type": "string" },
+          "degree": { "type": "string" },
+          "field_of_study": { "type": "string" },
+          "start_year": { "type": "integer", "minimum": 1970, "maximum": 2030 },
+          "end_year": { "type": "integer", "minimum": 1970, "maximum": 2035 },
+          "grade": { "type": ["string", "null"], "description": "GPA / percentage / class." },
+          "tier": {
+            "type": "string",
+            "enum": ["tier_1", "tier_2", "tier_3", "tier_4", "unknown"],
+            "description": "Internal tiering for institution prestige."
+          }
+        }
+      }
+    },
+    "skills": {
+      "type": "array",
+      "minItems": 0,
+      "items": {
+        "type": "object",
+        "required": ["name", "proficiency", "endorsements"],
+        "properties": {
+          "name": { "type": "string" },
+          "proficiency": {
+            "type": "string",
+            "enum": ["beginner", "intermediate", "advanced", "expert"]
+          },
+          "endorsements": { "type": "integer", "minimum": 0 },
+          "duration_months": { "type": "integer", "minimum": 0, "description": "Months the candidate has used this skill" }
+        }
+      }
+    },
+    "certifications": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "issuer", "year"],
+        "properties": {
+          "name": { "type": "string" },
+          "issuer": { "type": "string" },
+          "year": { "type": "integer" }
+        }
+      }
+    },
+    "languages": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["language", "proficiency"],
+        "properties": {
+          "language": { "type": "string" },
+          "proficiency": {
+            "type": "string",
+            "enum": ["basic", "conversational", "professional", "native"]
+          }
+        }
+      }
+    },
+    "redrob_signals": {
+      "type": "object",
+      "description": "Simulated platform activity and engagement signals from the Redrob ecosystem.",
+      "required": [
+        "profile_completeness_score",
+        "signup_date",
+        "last_active_date",
+        "open_to_work_flag",
+        "profile_views_received_30d",
+        "applications_submitted_30d",
+        "recruiter_response_rate",
+        "avg_response_time_hours",
+        "skill_assessment_scores",
+        "connection_count",
+        "endorsements_received",
+        "notice_period_days",
+        "expected_salary_range_inr_lpa",
+        "preferred_work_mode",
+        "willing_to_relocate",
+        "github_activity_score",
+        "search_appearance_30d",
+        "saved_by_recruiters_30d",
+        "interview_completion_rate",
+        "offer_acceptance_rate",
+        "verified_email",
+        "verified_phone",
+        "linkedin_connected"
+      ],
+      "properties": {
+        "profile_completeness_score": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Percentage of profile completeness."
+        },
+        "signup_date": { "type": "string", "format": "date" },
+        "last_active_date": { "type": "string", "format": "date" },
+        "open_to_work_flag": { "type": "boolean" },
+        "profile_views_received_30d": { "type": "integer", "minimum": 0 },
+        "applications_submitted_30d": { "type": "integer", "minimum": 0 },
+        "recruiter_response_rate": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Fraction of recruiter messages the candidate has responded to."
+        },
+        "avg_response_time_hours": { "type": "number", "minimum": 0 },
+        "skill_assessment_scores": {
+          "type": "object",
+          "description": "Dict of skill_name -> score 0-100. Assessments completed on Redrob platform.",
+          "additionalProperties": { "type": "number", "minimum": 0, "maximum": 100 }
+        },
+        "connection_count": { "type": "integer", "minimum": 0 },
+        "endorsements_received": { "type": "integer", "minimum": 0 },
+        "notice_period_days": { "type": "integer", "minimum": 0, "maximum": 180 },
+        "expected_salary_range_inr_lpa": {
+          "type": "object",
+          "required": ["min", "max"],
+          "properties": {
+            "min": { "type": "number", "minimum": 0 },
+            "max": { "type": "number", "minimum": 0 }
+          },
+          "description": "Expected salary in INR Lakhs Per Annum."
+        },
+        "preferred_work_mode": {
+          "type": "string",
+          "enum": ["remote", "hybrid", "onsite", "flexible"]
+        },
+        "willing_to_relocate": { "type": "boolean" },
+        "github_activity_score": {
+          "type": "number",
+          "minimum": -1,
+          "maximum": 100,
+          "description": "0-100 score based on commits, PRs, stars in last 12 months. -1 if no GitHub linked."
+        },
+        "search_appearance_30d": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of times profile appeared in recruiter searches in last 30 days."
+        },
+        "saved_by_recruiters_30d": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of recruiters who saved this profile in last 30 days."
+        },
+        "interview_completion_rate": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Fraction of scheduled interviews actually attended."
+        },
+        "offer_acceptance_rate": {
+          "type": "number",
+          "minimum": -1,
+          "maximum": 1,
+          "description": "Historical offer acceptance rate. -1 if no offer history."
+        },
+        "verified_email": { "type": "boolean" },
+        "verified_phone": { "type": "boolean" },
+        "linkedin_connected": { "type": "boolean" }
+      }
+    }
+  }
+}
