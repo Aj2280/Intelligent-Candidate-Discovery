@@ -36,7 +36,7 @@ team_members:
 # ============================================================================
 github_repo: "https://github.com/Aj2280/Intelligent-Candidate-Discovery.git"
 
-sandbox_link: "https://huggingface.co/spaces/FILL_THIS_IN/redrob-ranker"
+sandbox_link: "https://huggingface.co/spaces/Abhi2280/Intelligent-Candidate-Discovery"
 
 reproduce_command: "python rank.py --candidates ./candidates.jsonl --out ./team_xxx.csv"
 
