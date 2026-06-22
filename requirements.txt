@@ -5,10 +5,10 @@
 sentence-transformers==2.7.0
 torch>=2.5.0          # CPU version — install via:
                       # pip install torch --index-url https://download.pytorch.org/whl/cpu
-numpy==1.26.4
+numpy>=1.26.4
 
 # Data handling
-pandas==2.2.2
+pandas>=2.2.2
 tqdm==4.66.4
 jsonlines==4.0.0
 
