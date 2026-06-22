@@ -34,7 +34,7 @@ team_members:
 # ============================================================================
 # Code and reproducibility
 # ============================================================================
-github_repo: "https://github.com/FILL_THIS_IN/FILL_THIS_IN"
+github_repo: "https://github.com/Aj2280/Intelligent-Candidate-Discovery.git"
 
 sandbox_link: "https://huggingface.co/spaces/FILL_THIS_IN/redrob-ranker"
 
