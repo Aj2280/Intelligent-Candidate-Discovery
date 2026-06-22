@@ -7,17 +7,29 @@
 # ============================================================================
 # Team identity
 # ============================================================================
-team_name: "Future AI Builder"  # Used in leaderboard and announcements
+team_name: "Future AI Builders"  # Used in leaderboard and announcements
 
 primary_contact:
-  name: "FILL_THIS_IN"
-  email: "FILL_THIS_IN@example.com"   # Used for all organizer communication
-  phone: "+91-XXXXXXXXXX"        # Used for top-50 / top-10 outreach
+  name: "Abhishek Jadhav"
+  email: "abhishekjadhav2280@gmail.com"   # Used for all organizer communication
+  phone: "+91-9579882280"        # Used for top-50 / top-10 outreach
 
 team_members:
-  - name: "FILL_THIS_IN"
-    email: "FILL_THIS_IN@example.com"
-    role: "ML Engineer"          # Optional, e.g. "Team Lead", "Backend", "Data"
+  - name: "Abhishek Jadhav"
+    email: "abhishekjadhav2280@gmail.com"
+    role: "Team Lead" 
+  - name: "Rohan Wahule"
+    email: "rohanwahule12345@gmail.com"
+    role: "ML Engineer"
+  - name: "Kirtisheel Chikhlikar"
+    email: "@gmail.com"
+    role: "Data Engineer"
+  - name: "Vishal Rathod"
+    email: "@gmail.com"
+    role: "UI/UX Engineer"
+  
+    
+    # Optional, e.g. "Team Lead", "Backend", "Data"
 
 # ============================================================================
 # Code and reproducibility
