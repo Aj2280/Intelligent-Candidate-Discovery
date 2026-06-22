@@ -32,6 +32,30 @@ Our architecture consists of three core pillars:
 
 ---
 
+## 🛠️ Installation & Setup
+
+To run this project locally, you will need **Python 3.9+** installed on your system.
+
+### 1. Clone the repository
+```bash
+git clone https://github.com/Aj2280/Intelligent-Candidate-Discovery.git
+cd Intelligent-Candidate-Discovery
+```
+
+### 2. Create a virtual environment (Recommended)
+```bash
+python3 -m venv venv
+source venv/bin/activate  # On Windows use: venv\Scripts\activate
+```
+
+### 3. Install dependencies
+Install all the required Python libraries (PyTorch, SentenceTransformers, Pandas, etc.):
+```bash
+pip install -r requirements.txt
+```
+
+---
+
 ## ⚡ Quickstart & Reproducibility
 
 The system relies on an offline/online split. The heavy embeddings are precomputed, allowing the actual ranking pipeline to execute in **under 5 seconds** for 100K candidates on a standard CPU.
