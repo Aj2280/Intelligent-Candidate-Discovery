@@ -39,7 +39,7 @@ Vector databases: Pinecone, Weaviate, Qdrant, Milvus, FAISS, Elasticsearch, Open
 Hybrid search, BM25, semantic search, information retrieval, RAG, reranking.
 Evaluation frameworks for ranking: NDCG, MRR, MAP, offline benchmarks, A/B testing.
 Strong Python, production code quality, not pure research.
-NLP, natural language processing, text ranking, candidate matching, recommendation systems.
+NLP, natural language processing, text ranking, candidate matching.
 LLM fine-tuning: LoRA, QLoRA, PEFT desirable.
 Learning-to-rank, XGBoost, neural ranking models desirable.
 Scrappy product engineering, shipping ranking systems to real users.
@@ -50,34 +50,17 @@ Short notice period preferred.
 
 def build_candidate_text(candidate: dict) -> str:
     """
-    Build a rich text representation of the candidate for semantic embedding.
-    Weights: title > headline > career descriptions > verified skills > certs > summary.
-
-    Improvements over v1:
-    - Includes headline (often contains key tech stack)
-    - Includes certifications (ML certs are strongly JD-relevant)
-    - Includes all skills with endorsements > 0 (not just >6mo duration)
-      — 0-duration skill names still have semantic value even if not weighted
-      in feature scoring
-    - Extends summary clip from 500 → 800 chars
-    - Includes skill assessment scores if >= 60 (verified proficiency signal)
+    Build a rich text representation of the candidate.
+    Weights: title > career descriptions > skills > summary.
     """
     p = candidate.get("profile", {})
     career = candidate.get("career_history", [])
     skills = candidate.get("skills", [])
-    certs = candidate.get("certifications", [])
-    rs = candidate.get("redrob_signals", {})
 
-    # Title repeated 3x for higher embedding weight
+    # Title repeated 3x for higher weight
     title_text = f"{p.get('current_title', '')} " * 3
 
-    # Headline (often "ML Engineer | RAG | Pinecone | Fintech" — very dense)
-    headline = p.get("headline", "")
-
-    # Career descriptions (most signal-rich part — JD says Tier-5 candidates
-    # who built recommendation/ranking systems at product companies are fits
-    # even if they don't use keywords like 'RAG' or 'Pinecone'. Career
-    # descriptions are emitted TWICE to give them 2x embedding weight.)
+    # Career descriptions (most signal-rich part)
     career_texts = []
     for role in career:
         role_text = (
@@ -85,52 +68,27 @@ def build_candidate_text(candidate: dict) -> str:
             f"({role.get('industry', '')}): {role.get('description', '')}"
         )
         career_texts.append(role_text)
-        career_texts.append(role_text)  # 2x weight
 
-    # Verified skills with >= 6 months (high confidence)
+    # Only include skills used for >6 months (not keyword stuffers)
     real_skills = " ".join(
         s["name"]
         for s in skills
-        if s.get("duration_months", 0) >= 6
+        if s.get("duration_months", 0) > 6
     )
 
-    # All skill names with any endorsements (semantic value even without duration)
-    all_named_skills = " ".join(
-        s["name"]
-        for s in skills
-        if s.get("endorsements", 0) > 0 and s.get("duration_months", 0) == 0
-    )
-
-    # Certifications (ML certs are strongly relevant: "Deep Learning Specialization",
-    # "AWS ML", "Hugging Face NLP", etc.)
-    cert_text = " ".join(
-        f"{c.get('name', '')} {c.get('issuer', '')}"
-        for c in certs
-    )
-
-    # High-scoring skill assessments (verified platform signal)
-    assessment_scores = rs.get("skill_assessment_scores", {})
-    verified_skills_text = " ".join(
-        f"{skill} assessment"
-        for skill, score in assessment_scores.items()
-        if score >= 60
-    )
-
-    # Summary (self-written, less trusted; clip to 800 chars)
-    summary = p.get("summary", "")[:800]
+    # Summary (less trusted — self-written, can be inflated)
+    summary = p.get("summary", "")[:500]  # clip
 
     full_text = (
         title_text
-        + " " + headline
-        + " " + " ".join(career_texts)
-        + " " + real_skills
-        + " " + all_named_skills
-        + " " + cert_text
-        + " " + verified_skills_text
-        + " " + summary
+        + " ".join(career_texts)
+        + " "
+        + real_skills
+        + " "
+        + summary
     )
 
-    return full_text[:4000]  # clip total to avoid memory issues
+    return full_text[:3000]  # clip total to avoid memory issues
 
 
 def main():
@@ -164,12 +122,8 @@ def main():
     candidates_text = []
     cand_ids = []
 
-    import gzip
-    open_fn = gzip.open if args.candidates.endswith(".gz") else open
-    open_kwargs = {"mode": "rt", "encoding": "utf-8"} if args.candidates.endswith(".gz") else {"encoding": "utf-8"}
-
-    with open_fn(args.candidates, **open_kwargs) as f:
-        for line in tqdm(f, desc="Reading"):
+    with open(args.candidates) as f:
+        for line in tqdm(f, desc="Reading", total=100000):
             line = line.strip()
             if not line:
                 continue

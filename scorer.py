@@ -3,15 +3,14 @@ scorer.py
 Core feature scoring logic for the Redrob Intelligent Candidate Ranker.
 Returns a normalized score in [0, 1] for each candidate.
 
-Score breakdown (feature_score before behavioral multiplier):
-  28% Title + Career fit
-  30% Core skills match (weighted by proficiency + duration + assessments)
-  18% Experience years
-  14% Location fit
-  10% Education + Certifications
+Score breakdown:
+  30% Title + Career fit
+  25% Core skills match (weighted by proficiency + duration)
+  20% Experience years
+  15% Location fit
+  10% Education
 
-Behavioral multiplier: 0.4 – 1.0 (applied after feature_score)
-Title gate: 0.25x penalty for completely wrong-domain titles (score <= 5).
+Then multiplied by behavioral_multiplier() [0.4 - 1.0].
 """
 
 from datetime import date
@@ -45,7 +44,6 @@ TITLE_SCORES = {
     "mlops engineer": 82,
     "senior mlops engineer": 82,
     "machine learning platform engineer": 82,
-    "recommendation systems engineer": 92,  # Directly JD-relevant
     # Strong fit
     "research scientist": 78,
     "senior research scientist": 80,
@@ -59,9 +57,9 @@ TITLE_SCORES = {
     "nlp scientist": 78,
     "computer vision engineer": 72,
     "deep learning engineer": 85,
-    "junior ml engineer": 55,   # too junior but correct domain
+    "junior ml engineer": 55,  # too junior but correct domain
     "associate ml engineer": 55,
-    "data engineer": 35,        # adjacent — infra skill, not modeling
+    "data engineer": 35,       # adjacent — infra skill, not modeling
     "senior data engineer": 38,
     # Tech adjacent — needs career history check
     "software engineer": 40,
@@ -77,34 +75,33 @@ TITLE_SCORES = {
     "mobile developer": 10,
     "frontend engineer": 10,
     "qa engineer": 8,
-    # Wrong domain — hard gate (title_gate = 0.25x if raw score <= 5)
-    "hr manager": 3,
-    "accountant": 3,
-    "content writer": 3,
-    "graphic designer": 3,
-    "civil engineer": 3,
-    "mechanical engineer": 4,
-    "operations manager": 4,
-    "customer support": 3,
-    "sales executive": 4,
-    "marketing manager": 4,
+    # Wrong domain — heavy penalty
+    "hr manager": 2,
+    "accountant": 2,
+    "content writer": 2,
+    "graphic designer": 2,
+    "civil engineer": 2,
+    "mechanical engineer": 3,
+    "operations manager": 3,
+    "customer support": 2,
+    "sales executive": 3,
+    "marketing manager": 3,
     "project manager": 5,
     "business analyst": 8,
 }
 
 # Fuzzy keyword fallback: if title not in TITLE_SCORES, scan for these keywords.
+# Returns the score of the best-matching keyword pair found.
 TITLE_KEYWORD_SCORES = [
-    ([
-        "ml", "machine learning", "ai engineer", "nlp engineer",
-        "recommendation", "ranking engineer",
-    ], 90),
+    # (keyword_must_contain, score)  — checked in order, first match wins
+    (["ml", "machine learning", "ai engineer", "nlp engineer"], 90),
     (["deep learning", "neural"], 85),
     (["mlops", "ml platform", "ml infra"], 80),
     (["research scientist", "applied scientist"], 78),
     (["data scientist"], 70),
     (["nlp", "natural language"], 68),
     (["computer vision", "cv engineer"], 65),
-    (["ml", "machine learning"], 60),
+    (["ml", "machine learning"], 60),   # catches "junior ml" variants
     (["ai"], 55),
     (["data engineer"], 35),
     (["software engineer", "software developer"], 40),
@@ -175,14 +172,6 @@ CONSULTING_COMPANIES = {
     "capgemini", "tech mahindra", "hcl", "mphasis",
 }
 
-# Research institutions (not product companies) — career here without production = disqualifier
-RESEARCH_INSTITUTIONS = {
-    "iit", "iim", "iiit", "nit", "university", "college", "institute",
-    "iitb", "iitd", "iitm", "iisc", "tifr", "microsoft research",
-    "google research", "deepmind", "meta ai", "openai", "lab", "research lab",
-    "academia", "phd", "postdoc",
-}
-
 # India locations mapping
 LOCATION_SCORES = {
     "pune": 100, "noida": 100,
@@ -211,12 +200,6 @@ FIELD_BONUS = {
     "electrical engineering": 5,
 }
 
-# ML title keywords for career trajectory scoring
-ML_TITLE_KEYWORDS = [
-    "ml", "machine learning", "ai ", "nlp", "data scientist",
-    "research", "applied scientist", "deep learning", "recommendation",
-]
-
 
 # ─────────────────────────────────────────────
 # COMPONENT SCORERS
@@ -234,12 +217,7 @@ def _lookup_title_score(title: str) -> int:
 
 
 def score_title_career(candidate: dict) -> float:
-    """Returns 0-100. Combines title score + career history context.
-    JD disqualifiers applied here:
-    - Pure research career (academic labs only, no product deployment) → -25 pts
-    - Entire career at consulting firms → -20 pts
-    - ML role at product company is the gold standard → +18 pts
-    """
+    """Returns 0-100. Combines title score + career history context."""
     profile = candidate.get("profile", {})
     career = candidate.get("career_history", [])
 
@@ -251,7 +229,9 @@ def score_title_career(candidate: dict) -> float:
         r.get("industry", "") in PRODUCT_INDUSTRIES for r in career
     )
     has_ml_role_in_history = any(
-        any(kw in r.get("title", "").lower() for kw in ML_TITLE_KEYWORDS)
+        any(kw in r.get("title", "").lower() for kw in
+            ["ml", "machine learning", "ai", "nlp", "data scientist",
+             "research engineer", "applied scientist"])
         for r in career
     )
     all_consulting = len(career) > 0 and all(
@@ -259,31 +239,13 @@ def score_title_career(candidate: dict) -> float:
         for r in career
     )
 
-    # ML role at a product company is the gold standard
-    has_ml_at_product = any(
-        r.get("industry", "") in PRODUCT_INDUSTRIES
-        and any(kw in r.get("title", "").lower() for kw in ML_TITLE_KEYWORDS)
-        for r in career
-    )
-
-    # JD Disqualifier: Pure research career (all roles at universities/research labs)
-    # without any product company experience
-    all_research = len(career) > 0 and all(
-        any(ri in r.get("company", "").lower() for ri in RESEARCH_INSTITUTIONS)
-        for r in career
-    ) and not has_product_co
-
     bonus = 0
     if has_product_co:
-        bonus += 10
-    if has_ml_at_product:
-        bonus += 8  # Extra bonus: ML role AND product company
+        bonus += 12
     if has_ml_role_in_history and title_score < 60:
         bonus += 15  # Redeems bad current title if they had ML roles before
     if all_consulting:
-        bonus -= 20  # Penalty: entire career at consulting firms
-    if all_research:
-        bonus -= 25  # JD Disqualifier: pure research, no production deployment
+        bonus -= 20  # Penalty for pure consulting career
 
     return min(100, max(0, title_score + bonus))
 
@@ -307,7 +269,7 @@ CERT_BONUSES = {
 
 
 def score_skills(candidate: dict) -> float:
-    """Returns 0-100. Weighted by proficiency + duration + endorsements + assessments.
+    """Returns 0-100. Weighted by proficiency + duration + endorsements.
     Also applies a bonus for platform skill_assessment_scores."""
     skills = candidate.get("skills", [])
     assessment_scores = candidate.get("redrob_signals", {}).get("skill_assessment_scores", {})
@@ -337,83 +299,69 @@ def score_skills(candidate: dict) -> float:
         endorsements = skill.get("endorsements", 0)
         endorse_mult = min(1.0 + endorsements / 80.0, 1.5)
 
-        # Platform assessment score bonus: verified signal — boost by up to 25%
+        # Platform assessment score bonus: if the candidate passed a Redrob
+        # skill test, that's verified signal — boost by up to 20%
         assess_key = next(
             (k for k in assessment_scores if k.lower() == sname), None
         )
         assess_mult = 1.0
         if assess_key:
             assess_pct = assessment_scores[assess_key] / 100.0  # 0-1
-            assess_mult = 1.0 + 0.25 * assess_pct  # up to +25%
+            assess_mult = 1.0 + 0.20 * assess_pct  # up to +20%
 
         score = base * prof * dur_mult * endorse_mult * assess_mult
         total += score
-        max_possible += base * 1.5 * 2.0 * 1.5 * 1.25  # theoretical max
+        max_possible += base * 1.5 * 2.0 * 1.5 * 1.2  # theoretical max
 
     # Normalize — a perfect candidate gets ~80-90% of max
     if max_possible == 0:
         return 0.0
-    raw = (total / max_possible) * 150  # scale up so realistic scores hit 80+
-    return min(100.0, raw)
+    return min(100.0, (total / max_possible) * 150)  # scale up so realistic scores hit 80+
 
 
 def score_experience(candidate: dict) -> float:
-    """Returns 0-100. JD says 6-8yr is the sweet spot, 5-9 in scope.
-    "some hit senior judgment at 4 years" — so 4+ is considered.
-    """
+    """Returns 0-100. Sweet spot is 5-9 years per JD."""
     yoe = candidate.get("profile", {}).get("years_of_experience", 0)
 
-    if 6 <= yoe <= 8:
+    if 5 <= yoe <= 9:
         return 100.0
-    elif 5 <= yoe < 6 or 8 < yoe <= 9:
-        return 90.0
     elif 4 <= yoe < 5:
-        return 75.0   # JD: "some hit senior judgment at 4 years"
+        return 85.0
     elif 9 < yoe <= 11:
-        return 65.0
+        return 80.0
     elif 3 <= yoe < 4:
-        return 40.0
+        return 60.0
     elif 11 < yoe <= 13:
-        return 45.0
+        return 65.0
     elif 2 <= yoe < 3:
-        return 20.0
-    elif 13 < yoe <= 16:
         return 30.0
-    elif 1 <= yoe < 2:
-        return 10.0
+    elif 13 < yoe <= 16:
+        return 40.0
     else:
         return 5.0
 
 
 def score_location(candidate: dict) -> float:
-    """Returns 0-100. Pune/Noida preferred, India + willing to relocate acceptable.
-    Work mode preference penalty: candidates who prefer remote-only lose 15 pts
-    since the role is Pune/Noida onsite/hybrid.
-    """
+    """Returns 0-100. Pune/Noida preferred, India + willing to relocate acceptable."""
     profile = candidate.get("profile", {})
     signals = candidate.get("redrob_signals", {})
 
     location = profile.get("location", "").lower()
     country = profile.get("country", "").lower()
     willing = signals.get("willing_to_relocate", False)
-    work_mode = signals.get("preferred_work_mode", "flexible")
-
-    # Work mode penalty: strictly remote-only is a mismatch for an onsite/hybrid role
-    mode_penalty = 15.0 if work_mode == "remote" else 0.0
 
     # Check for specific city matches
     for city, score in LOCATION_SCORES.items():
         if city in location:
-            return max(0.0, float(score) - mode_penalty)
+            return float(score)
 
     # India but not a known city
     if country == "india":
-        base = 70.0 if willing else 55.0
-        return max(0.0, base - mode_penalty)
+        return 70.0 if willing else 55.0
 
     # Outside India
     if willing:
-        return max(0.0, 30.0 - mode_penalty)
+        return 30.0
     return 5.0
 
 
@@ -454,55 +402,6 @@ def score_education(candidate: dict) -> float:
     return min(100.0, base_edu + cert_bonus)
 
 
-def score_career_trajectory(candidate: dict) -> float:
-    """
-    Returns 0-20 bonus points for a progressive ML career arc.
-    Rewards candidates whose career shows increasing ML responsibility:
-      - Pivoted from SE/DE into ML role
-      - Had multiple ML roles at product companies
-      - Increasing seniority in ML titles
-    This is additive, not a standalone component.
-    """
-    career = candidate.get("career_history", [])
-    if len(career) < 2:
-        return 0.0
-
-    titles = [r.get("title", "").lower() for r in career]
-    industries = [r.get("industry", "") for r in career]
-
-    ml_roles = [
-        i for i, t in enumerate(titles)
-        if any(kw in t for kw in ML_TITLE_KEYWORDS)
-    ]
-
-    # Bonus 1: Multiple ML roles in career
-    if len(ml_roles) >= 3:
-        multi_ml_bonus = 15.0
-    elif len(ml_roles) >= 2:
-        multi_ml_bonus = 10.0
-    else:
-        multi_ml_bonus = 0.0
-
-    # Bonus 2: At least one ML role at a product company
-    ml_at_product = any(
-        industries[i] in PRODUCT_INDUSTRIES
-        for i in ml_roles
-    )
-    product_bonus = 5.0 if ml_at_product else 0.0
-
-    # Bonus 3: Seniority progression — does the most recent ML role have "senior",
-    # "lead", "principal", "staff" while earlier ones didn't?
-    if ml_roles:
-        current_ml = titles[ml_roles[0]] if ml_roles[0] == 0 else ""
-        seniority_bonus = 3.0 if any(
-            w in current_ml for w in ["senior", "lead", "principal", "staff"]
-        ) else 0.0
-    else:
-        seniority_bonus = 0.0
-
-    return min(20.0, multi_ml_bonus + product_bonus + seniority_bonus)
-
-
 def behavioral_multiplier(candidate: dict) -> float:
     """
     Returns 0.4 - 1.0.
@@ -521,17 +420,7 @@ def behavioral_multiplier(candidate: dict) -> float:
     recency = max(0.0, 1.0 - days_inactive / 180.0)
 
     notice = rs.get("notice_period_days", 90)
-    # JD: "sub-30-day notice preferred, we can buy out 30 days,
-    # 30+ day notice candidates still in scope but bar gets higher"
-    # Step function matching JD language:
-    if notice <= 30:
-        notice_score = 1.0    # ideal
-    elif notice <= 60:
-        notice_score = 0.7    # acceptable
-    elif notice <= 90:
-        notice_score = 0.4    # challenging
-    else:
-        notice_score = 0.15   # significant concern
+    notice_score = max(0.0, 1.0 - notice / 90.0)  # 0 days = 1.0, 90+ days = 0.0
 
     availability = (
         0.5 * float(rs.get("open_to_work_flag", False))
@@ -553,54 +442,18 @@ def behavioral_multiplier(candidate: dict) -> float:
     # Interview credibility
     interview_rate = rs.get("interview_completion_rate", 0.5)
 
-    # Offer acceptance rate: -1 = no history (neutral), 0-1 = track record
-    offer_rate = rs.get("offer_acceptance_rate", -1)
-    offer_score = max(0.0, offer_rate) if offer_rate >= 0 else 0.5  # neutral if no history
-
-    # Profile completeness micro-boost: 90%+ complete profile → serious candidate
+    # Profile completeness micro-boost: a 90%+ complete profile gets a small
+    # signal boost — indicates serious, engaged candidates
     completeness = rs.get("profile_completeness_score", 50.0)
     completeness_bonus = max(0.0, (completeness - 70.0) / 30.0) * 0.05  # 0 → +0.05
 
-    # Identity verification micro-boost: verified email + phone + LinkedIn
-    verified_email = float(rs.get("verified_email", False))
-    verified_phone = float(rs.get("verified_phone", False))
-    linkedin = float(rs.get("linkedin_connected", False))
-    identity_score = (verified_email + verified_phone + linkedin) / 3.0
-
-    # Recruiter demand signal: saved_by_recruiters & search appearances
-    saved = rs.get("saved_by_recruiters_30d", 0)
-    views = rs.get("profile_views_received_30d", 0)
-    demand_score = min(1.0, (saved / 15.0 + views / 100.0) / 2.0)
-
-    # Active job-seeking signal: applications_submitted_30d
-    # 0 apps = passive; 1-3 = lightly active; 4+ = actively searching
-    apps = rs.get("applications_submitted_30d", 0)
-    job_seeking_score = min(1.0, apps / 5.0)
-
-    # Salary fit signal: Senior AI Engineer market rate ≈ 25-70 LPA
-    # Candidates expecting far below (<15 LPA) may be under-qualified;  
-    # far above (>100 LPA) may be unreachable — small penalty
-    salary = rs.get("expected_salary_range_inr_lpa", {})
-    sal_mid = (salary.get("min", 30) + salary.get("max", 50)) / 2.0
-    if 15 <= sal_mid <= 80:
-        salary_fit = 1.0
-    elif sal_mid < 15:
-        salary_fit = max(0.3, sal_mid / 15.0)  # too low → questionable seniority
-    else:
-        salary_fit = max(0.5, 1.0 - (sal_mid - 80) / 100.0)  # too high → harder to close
-
-    # Combine (weights sum to 1.0 before bonuses)
+    # Combine
     raw = (
-        0.27 * availability
-        + 0.22 * responsiveness
-        + 0.16 * github_score
-        + 0.11 * interview_rate
-        + 0.07 * offer_score
-        + 0.06 * identity_score
-        + 0.06 * job_seeking_score    # active search signal
-        + 0.05 * salary_fit           # salary alignment
-        + completeness_bonus          # additive, up to +0.05
-        + 0.04 * demand_score         # recruiter demand additive
+        0.35 * availability
+        + 0.30 * responsiveness
+        + 0.20 * github_score
+        + 0.15 * interview_rate
+        + completeness_bonus
     )
 
     # Scale to 0.4 – 1.0 range
@@ -614,11 +467,10 @@ def behavioral_multiplier(candidate: dict) -> float:
 def score_candidate(candidate: dict) -> float:
     """
     Returns a feature score in [0, 1] for a single candidate.
-    Weights: title_career=28%, skills=30%, experience=18%, location=14%, education=10%.
-    Career trajectory bonus (0-20 pts) added to raw score before normalization.
+    Weights: title_career=30%, skills=25%, experience=20%, location=15%, education=10%.
     Then multiplied by behavioral_multiplier [0.4-1.0].
 
-    Title gate: if the raw title score is <= 5 (completely wrong domain —
+    Title gate: if the raw title score is < 10 (completely wrong domain —
     HR Manager, Accountant, etc.), a hard 0.25x multiplier is applied AFTER
     all other scoring. This prevents experience/location/behavioral signals
     from rescuing a fundamentally wrong-domain candidate.
@@ -628,21 +480,15 @@ def score_candidate(candidate: dict) -> float:
     e = score_experience(candidate)
     l = score_location(candidate)
     edu = score_education(candidate)
-    traj = score_career_trajectory(candidate)
 
-    # Weighted average (all components 0-100); trajectory is additive (0-20)
+    # Weighted average (all components 0-100)
     feature_score = (
-        0.28 * t
-        + 0.30 * s
-        + 0.18 * e
-        + 0.14 * l
+        0.30 * t
+        + 0.25 * s
+        + 0.20 * e
+        + 0.15 * l
         + 0.10 * edu
     ) / 100.0  # normalize to 0-1
-
-    # Career trajectory bonus: up to +0.06 (20 pts / 100 * 0.28 is the
-    # maximum it would contribute as a full component, so cap additive at 0.06)
-    traj_bonus = min(0.06, traj / 100.0 * 0.30)
-    feature_score = min(1.0, feature_score + traj_bonus)
 
     beh = behavioral_multiplier(candidate)
 
@@ -650,8 +496,7 @@ def score_candidate(candidate: dict) -> float:
         candidate.get("profile", {}).get("current_title", "").lower().strip()
     )
     # Hard domain gate: completely wrong-domain titles get a severe penalty.
-    # Threshold lowered from < 10 to <= 5 to stop penalizing "QA Engineer" (8pts)
-    # and "Project Manager" (5pts borderline). Only pure non-tech titles (HR, Accountant, etc.)
-    title_gate = 0.25 if raw_title_score <= 5 else 1.0
+    # Even great experience/location/behavioral signals cannot save an HR Manager.
+    title_gate = 0.25 if raw_title_score < 10 else 1.0
 
     return feature_score * beh * title_gate
