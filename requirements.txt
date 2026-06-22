@@ -3,7 +3,7 @@
 
 # Core ML
 sentence-transformers==2.7.0
-torch==2.3.0          # CPU version — install via:
+torch>=2.5.0          # CPU version — install via:
                       # pip install torch --index-url https://download.pytorch.org/whl/cpu
 numpy==1.26.4
 
