@@ -168,8 +168,8 @@ def rank_uploaded_candidates(file_obj) -> tuple:
 
 CSS = """
 #header { text-align: center; margin-bottom: 1em; }
-#upload-col { border-radius: 12px; padding: 1em; }
-#results-col { border-radius: 12px; padding: 1em; }
+#upload-col { background: var(--background-fill-secondary); border-radius: 12px; padding: 1em; }
+#results-col { background: var(--background-fill-secondary); border-radius: 12px; padding: 1em; }
 """
 
 with gr.Blocks(title="Redrob Candidate Ranker — Demo", css=CSS) as demo:
