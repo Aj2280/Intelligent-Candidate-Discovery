@@ -243,9 +243,7 @@ with gr.Blocks(title="Redrob Candidate Ranker") as demo:
         </div>
         <div id="nav-links">
             <a href="#" class="active">🏠 Home</a>
-            <a href="#">💡 How It Works</a>
-            <a href="#">🎯 Scoring</a>
-            <a href="#">ℹ️ About</a>
+            <a href="#" onclick="alert('How It Works:\\n\\n1. Upload your JSONL file of candidates (max 500).\\n2. Adjust the sliders.\\n3. Click Rank Candidates.\\n\\nThe system ranks candidates using Semantic Similarity (45%) and Feature Scoring (55%) against the Job Description.'); return false;">💡 How It Works</a>
         </div>
         <div>
             <button style="background:#f3e8ff; color:#7c3aed; padding:8px 16px; border-radius:6px; font-weight:bold; border:none;">✨ AI-Powered Matching</button>
