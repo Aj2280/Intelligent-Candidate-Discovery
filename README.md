@@ -12,6 +12,47 @@ Our engine evaluates 100,000+ candidates against complex Job Descriptions (JDs) 
 ---
 
 ## 🧠 Architecture Overview
+## 🏗️ Architecture
+
+```mermaid
+graph LR
+
+    User((Recruiter))
+
+    User -->|Upload Candidates| Dataset[Candidates JSONL]
+
+    Dataset --> Precompute[Embedding Generator]
+
+    Precompute --> Model[BAAI/bge-small-en-v1.5]
+
+    Model --> CandidateEmb[(Candidate Embeddings)]
+    Model --> JDEmb[(JD Embedding)]
+
+    CandidateEmb --> Ranker[Hybrid Ranking Engine]
+    JDEmb --> Ranker
+
+    Ranker --> Semantic[Semantic Similarity]
+    Ranker --> Features[Feature Scoring]
+    Ranker --> Behavior[Behavioral Signals]
+    Ranker --> Honeypot[Honeypot Detection]
+
+    Semantic --> Fusion[Score Fusion Layer]
+    Features --> Fusion
+    Behavior --> Fusion
+    Honeypot --> Fusion
+
+    Fusion --> Reasoning[Reasoning Generator]
+
+    Reasoning --> Top100[Top 100 Ranked Candidates]
+
+    Top100 --> CSV[Validator-Compliant CSV]
+
+    style Ranker fill:#6366F1,color:#fff
+    style Fusion fill:#10B981,color:#fff
+    style Honeypot fill:#DC2626,color:#fff
+    style CSV fill:#F59E0B,color:#fff
+```
+
 
 The system is explicitly engineered to beat the strict **5-minute, CPU-only, 16GB RAM constraint** by separating the heavy NLP workload from the dynamic ranking logic. 
 
