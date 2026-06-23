@@ -173,7 +173,7 @@ def rank_uploaded_candidates(file_obj, requested_top_n=100, preview_count=20) ->
         preview_lines.append(f"\n*... and {top_n - int(preview_count)} more in the downloadable CSV*")
 
     # KPIs
-    total_cands = len(candidates) + honeypot_count
+    total_cands = len(candidates)
     avg_score = sum(item["_norm_score"] for item in top) / len(top) if top else 0.0
 
     return (
