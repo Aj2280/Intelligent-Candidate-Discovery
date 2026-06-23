@@ -216,7 +216,9 @@ CSS = """
 body { background-color: var(--bg-main) !important; font-family: 'Inter', sans-serif; }
 #top-nav { display: flex; justify-content: space-between; align-items: center; padding: 10px 20px; background: var(--nav-bg); border-bottom: 1px solid var(--border-color); }
 #nav-links { display: flex; gap: 20px; font-weight: 500; color: var(--nav-text); }
-#nav-links span.active { color: var(--primary); border-bottom: 2px solid var(--primary); padding-bottom: 5px; }
+#nav-links a { text-decoration: none; color: inherit; cursor: pointer; transition: color 0.2s; }
+#nav-links a:hover { color: var(--primary); }
+#nav-links a.active { color: var(--primary); border-bottom: 2px solid var(--primary); padding-bottom: 5px; }
 .hero-title { font-size: 2em; font-weight: bold; margin-bottom: 5px; }
 .hero-title span { color: var(--primary); }
 .hero-subtitle { color: var(--subtitle-text); margin-bottom: 20px; }
@@ -240,10 +242,10 @@ with gr.Blocks(title="Redrob Candidate Ranker") as demo:
             <span style="font-size:1.5em;">🔍</span> Redrob <span style="color:#7c3aed;">Ranker</span>
         </div>
         <div id="nav-links">
-            <span class="active">🏠 Home</span>
-            <span>💡 How It Works</span>
-            <span>🎯 Scoring</span>
-            <span>ℹ️ About</span>
+            <a href="#" class="active">🏠 Home</a>
+            <a href="#">💡 How It Works</a>
+            <a href="#">🎯 Scoring</a>
+            <a href="#">ℹ️ About</a>
         </div>
         <div>
             <button style="background:#f3e8ff; color:#7c3aed; padding:8px 16px; border-radius:6px; font-weight:bold; border:none;">✨ AI-Powered Matching</button>
