@@ -49,7 +49,7 @@ def _load_model():
         _jd_emb = _model.encode(JD_TEXT, normalize_embeddings=True)
 
 
-def rank_uploaded_candidates(file_obj) -> tuple:
+def rank_uploaded_candidates(file_obj, requested_top_n=100) -> tuple:
     """
     Takes an uploaded JSONL file, ranks candidates, returns:
     - Markdown preview of top 20 with score breakdown
@@ -127,7 +127,7 @@ def rank_uploaded_candidates(file_obj) -> tuple:
         })
 
     results.sort(key=lambda x: x["combined"], reverse=True)
-    top_n = min(len(results), 100)
+    top_n = min(len(results), int(requested_top_n))
     top = results[:top_n]
 
     if not top:
@@ -203,6 +203,13 @@ with gr.Blocks(title="Redrob Candidate Ranker — Demo", css=CSS) as demo:
                 label="Upload candidates JSONL (max 500 candidates)",
                 file_types=[".jsonl", ".json"],
             )
+            top_n_input = gr.Slider(
+                minimum=1, 
+                maximum=500, 
+                value=100, 
+                step=1, 
+                label="Number of top candidates to return"
+            )
             rank_btn = gr.Button("🚀 Rank Candidates", variant="primary", size="lg")
 
             gr.Markdown("""
@@ -226,7 +233,7 @@ with gr.Blocks(title="Redrob Candidate Ranker — Demo", css=CSS) as demo:
 
     rank_btn.click(
         fn=rank_uploaded_candidates,
-        inputs=[file_input],
+        inputs=[file_input, top_n_input],
         outputs=[output_text, output_file],
     )
 
