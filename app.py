@@ -211,11 +211,11 @@ with gr.Blocks(title="Redrob Candidate Ranker — Demo", css=CSS) as demo:
                 label="Number of top candidates to return (in CSV)"
             )
             preview_count_input = gr.Slider(
-                minimum=1, 
+                minimum=10, 
                 maximum=100, 
-                value=20, 
+                value=25, 
                 step=1, 
-                label="Number of candidates to preview on screen"
+                label="Top N to display"
             )
             rank_btn = gr.Button("🚀 Rank Candidates", variant="primary", size="lg")
 
