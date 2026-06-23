@@ -213,9 +213,10 @@ body { background-color: var(--bg-main) !important; font-family: 'Inter', sans-s
 .kpi-val { font-size: 1.5em; font-weight: bold; color: var(--primary); }
 .kpi-label { font-size: 0.8em; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; }
 .kpi-icon { font-size: 1.2em; margin-bottom: 5px; }
+.container { padding: 0 20px; }
 """
 
-with gr.Blocks(title="Redrob Candidate Ranker", css=CSS) as demo:
+with gr.Blocks(title="Redrob Candidate Ranker") as demo:
     gr.HTML("""
     <div id="top-nav">
         <div style="font-weight:bold; font-size:1.2em; display:flex; align-items:center; gap:8px;">
@@ -237,7 +238,7 @@ with gr.Blocks(title="Redrob Candidate Ranker", css=CSS) as demo:
     </div>
     """)
 
-    with gr.Row(elem_classes="container", style="padding: 0 20px;"):
+    with gr.Row(elem_classes="container"):
         with gr.Column(scale=1, elem_classes="card"):
             gr.HTML('<div class="card-title"><span class="step-circle">1</span> Upload Candidates</div>')
             gr.Markdown("<p style='color:#6b7280; font-size:0.9em;'>Upload a JSONL file containing candidate data (max 500 candidates).</p>")
@@ -312,4 +313,4 @@ with gr.Blocks(title="Redrob Candidate Ranker", css=CSS) as demo:
     gr.HTML("<div style='text-align:center; padding:20px; color:#9ca3af; font-size:0.85em; border-top:1px solid #eaeaea; margin-top:20px;'>Built for <strong>IndiaRuns Hackathon 2025</strong> | AI-Powered Candidate Ranking System</div>")
 
 if __name__ == "__main__":
-    demo.launch()
+    demo.launch(css=CSS)
