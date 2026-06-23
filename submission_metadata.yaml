@@ -1,18 +1,14 @@
-# Redrob Hackathon — Submission Metadata Template
-#
-# Copy this file to your repo root as `submission_metadata.yaml` and fill it in.
-# The fields here should match what you submit via the portal at upload time.
-# Stage 3 review uses this file to verify your portal metadata.
+Redrob Hackathon — Submission Metadata Template
 
 # ============================================================================
 # Team identity
 # ============================================================================
-team_name: "Future AI Builders"  # Used in leaderboard and announcements
+team_name: "Future AI Builders"  
 
 primary_contact:
   name: "Abhishek Jadhav"
-  email: "abhishekjadhav2280@gmail.com"   # Used for all organizer communication
-  phone: "+91-9579882280"        # Used for top-50 / top-10 outreach
+  email: "abhishekjadhav2280@gmail.com"   
+  phone: "+91-9579882280"       
 
 team_members:
   - name: "Abhishek Jadhav"
@@ -22,14 +18,12 @@ team_members:
     email: "rohanwahule12345@gmail.com"
     role: "ML Engineer"
   - name: "Kirtisheel Chikhlikar"
-    email: "@gmail.com"
+    email: "kirthmarvel9423@gmail.com"
     role: "Data Engineer"
   - name: "Vishal Rathod"
     email: "@gmail.com"
     role: "UI/UX Engineer"
   
-    
-    # Optional, e.g. "Team Lead", "Backend", "Data"
 
 # ============================================================================
 # Code and reproducibility
@@ -44,37 +38,53 @@ reproduce_command: "python3 rank.py --candidates candidates.jsonl --out team_sub
 # Compute environment
 # ============================================================================
 compute:
-  platform: "Local CPU"                         # Or: "AWS EC2 c5.4xlarge", "Local Linux box", etc.
-  cpu_cores: 8                                  # Number of CPU cores used
-  ram_gb: 16                                    # Available RAM in GB
-  python_version: "3.10"                        # python --version
-  os: "macOS 14"                                # Or "Ubuntu 22.04 LTS", etc.
-  uses_gpu_for_inference: false                 # Must be false — see compute constraints
-  has_network_during_ranking: false             # Must be false — no API calls during ranking
-  pre_computation_required: true                # true if you pre-compute embeddings or train models offline
-  pre_computation_time_minutes: 10              # Approximate, if applicable
+  platform: "MackBook Air M4"                        
+  cpu_cores: 10                                
+  ram_gb: 16                                 
+  python_version: "3.10" 
+  os: "macOS 14"                           
+  uses_gpu_for_inference: false 
+  has_network_during_ranking: false           
+  pre_computation_required: true                
+  pre_computation_time_minutes: 210           
 
 # ============================================================================
 # AI tools declaration
 # ============================================================================
 ai_tools_used:
-  - "Gemini"        # e.g. for architecture discussion, code review
+
+* "ChatGPT"
+* "Gemini"
+* "Antigravity"
 
 ai_usage_summary: |
-  Used Gemini as an agentic assistant to architect and implement the ranking engine,
-  build test suites, and audit the logic against the JD requirements. All logic executes locally.
+AI-assisted development was used throughout the project lifecycle.
+
+* ChatGPT was used for code review, debugging, architecture discussions,
+  UI/UX improvements, documentation drafting, and testing support.
+
+* Gemini was used for technical documentation, README improvements,
+  architecture validation, and debugging assistance.
+
+* Antigravity was used as an AI coding assistant to accelerate implementation,
+  generate boilerplate code, refactor modules, and improve development productivity.
+
+All ranking logic, scoring methodology, candidate filtering, evaluation,
+and final submission outputs execute locally without external API calls during ranking.
 
 # ============================================================================
 # Approach summary (optional but recommended)
 # ============================================================================
 methodology_summary: |
-  A two-stage hybrid ranker designed to balance JD alignment with platform engagement signals.
-  Stage 1: Candidates are scored on 55% feature signals (title matching, skills duration decay,
-  experience sweet-spot, education) and 45% semantic similarity (SentenceTransformers). A behavioral
-  multiplier penalizes disengaged candidates (e.g. 90-day notice, low response rate, remote-only).
-  Honeypot detection filters impossible profiles.
-  Stage 2: Candidates in the top 15% of both feature and semantic scores receive an 8% boost
-  to surface true multi-dimensional fits.
+  We implemented a two-stage hybrid ranking architecture that combines semantic
+  retrieval with structured feature scoring. Candidate relevance is computed using
+  SentenceTransformer embeddings (45%) and domain-specific feature engineering (55%)
+  including title alignment, skill quality, experience fit, education, and location.
+  Behavioral signals such as recruiter engagement, response rate, notice period,
+  and profile activity are incorporated through a multiplier layer. Adversarial
+  profiles are filtered using a honeypot detection module. The final ranking
+  pipeline is fully CPU-compatible, deterministic, and optimized for large-scale
+  candidate discovery under hackathon constraints.
 
 # ============================================================================
 # Declarations
