@@ -49,7 +49,7 @@ def _load_model():
         _jd_emb = _model.encode(JD_TEXT, normalize_embeddings=True)
 
 
-def rank_uploaded_candidates(file_obj, requested_top_n=100) -> tuple:
+def rank_uploaded_candidates(file_obj, requested_top_n=100, preview_count=20) -> tuple:
     """
     Takes an uploaded JSONL file, ranks candidates, returns:
     - Markdown preview of top 20 with score breakdown
@@ -159,7 +159,7 @@ def rank_uploaded_candidates(file_obj, requested_top_n=100) -> tuple:
         "| Rank | ID | Title | YOE | Feature | Semantic | Behavioral | Score |",
         "|------|-----|-------|-----|---------|----------|------------|-------|",
     ]
-    for rank, item in enumerate(top[:20], 1):
+    for rank, item in enumerate(top[:int(preview_count)], 1):
         p = item["candidate"].get("profile", {})
         preview_lines.append(
             f"| **{rank}** | {item['candidate_id']} | "
@@ -170,8 +170,8 @@ def rank_uploaded_candidates(file_obj, requested_top_n=100) -> tuple:
             f"{item['behavioral']:.2f} | "
             f"**{item['_norm_score']}** |"
         )
-    if top_n > 20:
-        preview_lines.append(f"\n*... and {top_n - 20} more in the downloadable CSV*")
+    if top_n > int(preview_count):
+        preview_lines.append(f"\n*... and {top_n - int(preview_count)} more in the downloadable CSV*")
 
     return "\n".join(preview_lines), tmp.name
 
@@ -208,7 +208,14 @@ with gr.Blocks(title="Redrob Candidate Ranker — Demo", css=CSS) as demo:
                 maximum=500, 
                 value=100, 
                 step=1, 
-                label="Number of top candidates to return"
+                label="Number of top candidates to return (in CSV)"
+            )
+            preview_count_input = gr.Slider(
+                minimum=1, 
+                maximum=100, 
+                value=20, 
+                step=1, 
+                label="Number of candidates to preview on screen"
             )
             rank_btn = gr.Button("🚀 Rank Candidates", variant="primary", size="lg")
 
@@ -233,7 +240,7 @@ with gr.Blocks(title="Redrob Candidate Ranker — Demo", css=CSS) as demo:
 
     rank_btn.click(
         fn=rank_uploaded_candidates,
-        inputs=[file_input, top_n_input],
+        inputs=[file_input, top_n_input, preview_count_input],
         outputs=[output_text, output_file],
     )
 
