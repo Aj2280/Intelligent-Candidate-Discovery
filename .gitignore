@@ -1,2 +1,6 @@
 models/
 precompute/embeddings.npy
+*.csv
+*.jsonl
+test.json
+sample_*.json
