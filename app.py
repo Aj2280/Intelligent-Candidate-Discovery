@@ -72,13 +72,25 @@ def rank_uploaded_candidates(file_obj) -> tuple:
             content = f.read()
 
     candidates = []
-    for line in content.strip().split("\n"):
-        line = line.strip()
-        if line:
-            try:
-                candidates.append(json.loads(line))
-            except json.JSONDecodeError:
-                continue
+    # Try parsing as a standard JSON array first
+    try:
+        parsed_data = json.loads(content)
+        if isinstance(parsed_data, list):
+            candidates = parsed_data
+        elif isinstance(parsed_data, dict):
+            candidates = [parsed_data]
+    except json.JSONDecodeError:
+        pass
+
+    # Fallback to JSON Lines (JSONL) line-by-line parsing if empty
+    if not candidates:
+        for line in content.strip().split("\n"):
+            line = line.strip()
+            if line:
+                try:
+                    candidates.append(json.loads(line))
+                except json.JSONDecodeError:
+                    continue
 
     if not candidates:
         return "❌ **Error:** No valid candidates found in the file.", None
