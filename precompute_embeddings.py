@@ -69,11 +69,11 @@ def build_candidate_text(candidate: dict) -> str:
         )
         career_texts.append(role_text)
 
-    # Only include skills used for >6 months (not keyword stuffers)
+    # Only include skills used for >6 months (not keyword stuffers) if duration is provided
     real_skills = " ".join(
-        s["name"]
+        s["name"] if isinstance(s, dict) else str(s)
         for s in skills
-        if s.get("duration_months", 0) > 6
+        if not isinstance(s, dict) or s.get("duration_months", 0) > 6
     )
 
     # Summary (less trusted — self-written, can be inflated)

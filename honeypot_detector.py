@@ -35,9 +35,9 @@ def is_honeypot(candidate: dict) -> bool:
 
     # --- FLAG 2: Expert/Advanced proficiency with 0 months used ---
     expert_zero = [
-        s["name"]
+        s["name"] if isinstance(s, dict) else str(s)
         for s in skills
-        if s.get("proficiency") in ("expert", "advanced")
+        if isinstance(s, dict) and s.get("proficiency") in ("expert", "advanced")
         and s.get("duration_months", 1) == 0
     ]
     if len(expert_zero) >= 2:
@@ -47,7 +47,7 @@ def is_honeypot(candidate: dict) -> bool:
     quick_experts = [
         s
         for s in skills
-        if s.get("proficiency") in ("expert", "advanced")
+        if isinstance(s, dict) and s.get("proficiency") in ("expert", "advanced")
         and 0 < s.get("duration_months", 999) < 3
     ]
     if len(quick_experts) >= 4:
@@ -69,7 +69,7 @@ def is_honeypot(candidate: dict) -> bool:
     # --- FLAG 6: Skill endorsements absurdly high (>200) with beginner level ---
     absurd_endorsements = [
         s for s in skills
-        if s.get("endorsements", 0) > 200 and s.get("proficiency") == "beginner"
+        if isinstance(s, dict) and s.get("endorsements", 0) > 200 and s.get("proficiency") == "beginner"
     ]
     if len(absurd_endorsements) >= 2:
         flags += 1
@@ -78,7 +78,7 @@ def is_honeypot(candidate: dict) -> bool:
     # Classic keyword stuffer: RAG, Pinecone, FAISS, Embeddings all = 0 months
     zero_duration_tier1 = [
         s for s in skills
-        if s.get("name", "").lower() in TIER1_CORE_SKILLS
+        if isinstance(s, dict) and s.get("name", "").lower() in TIER1_CORE_SKILLS
         and s.get("duration_months", 1) == 0
     ]
     if len(zero_duration_tier1) >= 4:

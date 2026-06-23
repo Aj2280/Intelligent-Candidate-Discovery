@@ -277,6 +277,8 @@ def score_skills(candidate: dict) -> float:
     max_possible = 0.0
 
     for skill in skills:
+        if isinstance(skill, str):
+            skill = {"name": skill, "duration_months": 24, "proficiency": "intermediate"}
         sname = skill.get("name", "").lower().strip()
         base = CORE_SKILLS.get(sname, 0)
         if base == 0:

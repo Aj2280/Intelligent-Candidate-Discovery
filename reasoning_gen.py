@@ -78,9 +78,13 @@ def generate_reasoning(candidate: dict, rank: int, scores: dict) -> str:
     country = p.get("country", "")
 
     # Find top relevant skills with actual usage time
+    normalized_skills = [
+        s if isinstance(s, dict) else {"name": str(s), "duration_months": 24, "proficiency": "intermediate"}
+        for s in skills
+    ]
     relevant_skills = sorted(
         [
-            s for s in skills
+            s for s in normalized_skills
             if s.get("name", "").lower() in CORE_SKILL_NAMES
             and s.get("duration_months", 0) > 3
         ],
