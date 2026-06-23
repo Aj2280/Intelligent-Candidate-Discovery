@@ -5,9 +5,11 @@
 ![CPU Pipeline](https://img.shields.io/badge/Compute-CPU--Only-green)
 ![Hackathon](https://img.shields.io/badge/Redrob-Hackathon%20v4-red)
 
+[🚀 Try it on Hugging Face Spaces](https://huggingface.co/spaces/Abhi2280/Intelligent-Candidate-Discovery)
+
 An advanced, highly-optimized two-stage hybrid ranking system built for the Redrob Intelligent Candidate Discovery Hackathon. 
 
-Our engine evaluates 100,000+ candidates against complex Job Descriptions (JDs) using a proprietary blend of **dense semantic similarity (SentenceTransformers)** and **rules-based feature extraction**, augmented by **behavioral engagement signals** (like recruiter saves, notice periods, and application velocity).
+Our engine evaluates 100,000+ candidates against complex Job Descriptions (JDs) using a proprietary blend of **dense semantic similarity (SentenceTransformers)** and **rules-based feature extraction**.
 
 ---
 
@@ -196,8 +198,8 @@ python3 validate_submission.py team_submission.csv
 ## 🔍 Key Differentiators
 
 * **Explicit Tie-Breaking:** Deterministic score rounding (6 decimal places) with Candidate ID fallback ensures we never violate the auto-validator's strict sorting rules.
-* **Granular Reasoning Generation:** The `reasoning_gen.py` module produces distinct, hyper-specific reasoning lines mapping explicit profile facts to JD requirements, passing Stage 4 manual reviews with zero hallucinations.
-* **Stuffer Penalties:** "Lazy" keyword stuffers are immediately dropped by checking the `verified` platform flag and enforcing a duration-weighted trust modifier on all skills. Pure consulting or pure research careers face targeted penalties, perfectly aligning with the provided JD.
+* **Granular Reasoning Generation:** The `reasoning_gen.py` module produces distinct, hyper-specific reasoning lines mapping explicit profile facts to JD requirements, passing Stage 4 manual reviews with flying colors.
+* **Stuffer Penalties:** "Lazy" keyword stuffers are immediately dropped by checking the `verified` platform flag and enforcing a duration-weighted trust modifier on all skills. Pure consulting or pure recruiter backgrounds are handled transparently.
 
 ---
 *Built for the Redrob Data & AI Challenge.*
