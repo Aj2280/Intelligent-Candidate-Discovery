@@ -12,64 +12,136 @@ Our engine evaluates 100,000+ candidates against complex Job Descriptions (JDs) 
 ---
 
 ## 🧠 Architecture Overview
-## 🏗️ Architecture
+## 🏗️ System Architecture
 
 ```mermaid
-graph LR
+graph TD
 
-    User((Recruiter))
+    A[📄 Candidates JSONL]
+    --> B[🧠 Precompute Embeddings]
 
-    User -->|Upload Candidates| Dataset[Candidates JSONL]
+    B --> C[🤖 BAAI/bge-small-en-v1.5]
 
-    Dataset --> Precompute[Embedding Generator]
+    C --> D[(Candidate Embeddings)]
+    C --> E[(JD Embedding)]
 
-    Precompute --> Model[BAAI/bge-small-en-v1.5]
+    D --> F[⚡ Hybrid Ranking Engine]
+    E --> F
 
-    Model --> CandidateEmb[(Candidate Embeddings)]
-    Model --> JDEmb[(JD Embedding)]
+    F --> G[📊 Feature Scoring]
+    F --> H[🎯 Semantic Similarity]
+    F --> I[📈 Behavioral Signals]
+    F --> J[🛡 Honeypot Detection]
 
-    CandidateEmb --> Ranker[Hybrid Ranking Engine]
-    JDEmb --> Ranker
+    G --> K[🔄 Score Fusion Layer]
+    H --> K
+    I --> K
+    J --> K
 
-    Ranker --> Semantic[Semantic Similarity]
-    Ranker --> Features[Feature Scoring]
-    Ranker --> Behavior[Behavioral Signals]
-    Ranker --> Honeypot[Honeypot Detection]
+    K --> L[💡 Reasoning Generator]
 
-    Semantic --> Fusion[Score Fusion Layer]
-    Features --> Fusion
-    Behavior --> Fusion
-    Honeypot --> Fusion
+    L --> M[🏆 Top 100 Ranked Candidates]
 
-    Fusion --> Reasoning[Reasoning Generator]
+    M --> N[📄 Submission CSV]
 
-    Reasoning --> Top100[Top 100 Ranked Candidates]
+    style F fill:#6366F1,color:#fff
+    style K fill:#10B981,color:#fff
+    style J fill:#DC2626,color:#fff
+    style N fill:#F59E0B,color:#fff
+```
 
-    Top100 --> CSV[Validator-Compliant CSV]
+---
 
-    style Ranker fill:#6366F1,color:#fff
-    style Fusion fill:#10B981,color:#fff
-    style Honeypot fill:#DC2626,color:#fff
-    style CSV fill:#F59E0B,color:#fff
+## 📊 Scoring Framework
+
+### Final Score
+
+```text
+Final Score =
+(0.55 × Feature Score)
++
+(0.45 × Semantic Similarity)
+
+× Behavioral Multiplier
+```
+
+### Feature Score Breakdown
+
+| Component          | Weight |
+| ------------------ | ------ |
+| Title + Career Fit | 30%    |
+| Skills Match       | 25%    |
+| Experience (YOE)   | 20%    |
+| Location Fit       | 15%    |
+| Education          | 10%    |
+
+---
+
+## 📈 Behavioral Signals Considered
+
+| Signal                    | Impact          |
+| ------------------------- | --------------- |
+| Open To Work              | Positive        |
+| Notice Period             | Lower is Better |
+| Recruiter Saves           | Positive        |
+| Response Rate             | Positive        |
+| Profile Activity          | Positive        |
+| GitHub Activity           | Positive        |
+| Interview Completion Rate | Positive        |
+
+---
+
+## 🛡 Honeypot Detection (9 Checks)
+
+* Expert skills with 0 months duration
+* Impossible experience timelines
+* Future employment dates
+* Overlapping concurrent roles
+* Unusually high endorsements
+* Tier-1 skills with zero duration
+* Keyword stuffing
+* Suspicious profile completeness
+* YOE exceeding total career duration
+
+---
+
+## ⚡ Performance & Resource Usage
+
+| Metric               | Value                     |
+| -------------------- | ------------------------- |
+| Candidates Supported | 100,000+                  |
+| Ranking Time         | < 5 Seconds               |
+| Compute              | CPU Only                  |
+| Memory Limit         | < 16 GB                   |
+| Embedding Model      | BAAI/bge-small-en-v1.5    |
+| Embedding Dimension  | 384                       |
+| Output               | Top 100 Ranked Candidates |
+
+---
+
+## 📂 Project Structure
+
+```text
+Intelligent-Candidate-Discovery
+│
+├── precompute_embeddings.py
+├── rank.py
+├── scorer.py
+├── honeypot_detector.py
+├── reasoning_gen.py
+├── validate_submission.py
+├── requirements.txt
+├── candidates.jsonl
+│
+├── precompute/
+│   ├── embeddings.npy
+│   ├── cand_ids.npy
+│   └── jd_embedding.npy
+│
+└── README.md
 ```
 
 
-The system is explicitly engineered to beat the strict **5-minute, CPU-only, 16GB RAM constraint** by separating the heavy NLP workload from the dynamic ranking logic. 
-
-Our architecture consists of three core pillars:
-
-1. **Semantic Pre-computation (`precompute_embeddings.py`)**
-   - Runs offline to encode the JD and Candidate profiles into a 384-dimensional vector space using `BAAI/bge-small-en-v1.5`.
-   - **Signal Boosting:** Career history descriptions are dynamically double-weighted before encoding to emphasize real-world product experience over keyword-stuffed headlines.
-
-2. **The Ranker (`rank.py` & `scorer.py`)**
-   - **Feature Engine (55%):** Extracts YOE sweet-spots, title semantic matches, and normalizes skill duration/endorsement trust.
-   - **Semantic Engine (45%):** Cosine similarity between precomputed candidate/JD embeddings.
-   - **Behavioral Multiplier:** Scales the final score using platform signals (e.g., heavily penalizing 90-day notice periods, rewarding candidates actively applying).
-   - **Dual-Top Reranking:** Candidates scoring in the top 15% of *both* Feature and Semantic dimensions receive an 8% non-linear boost, surfacing the truest "unicorn" fits.
-
-3. **Adversarial Defenses (`honeypot_detector.py`)**
-   - Implements 9 rigid flags to detect impossible profiles (e.g., "Expert" skills with 0 months used, YOE exceeding career duration, duplicate concurrent roles).
 
 ---
 
