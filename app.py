@@ -233,6 +233,7 @@ body { background-color: var(--bg-main) !important; font-family: 'Inter', sans-s
 .kpi-label { font-size: 0.8em; color: var(--subtitle-text); text-transform: uppercase; letter-spacing: 0.5px; }
 .kpi-icon { font-size: 1.2em; margin-bottom: 5px; }
 .container { padding: 0 20px; }
+.scrollable-results { max-height: 550px; overflow-y: auto; padding-right: 10px; }
 """
 
 with gr.Blocks(title="Redrob Candidate Ranker") as demo:
@@ -295,7 +296,8 @@ with gr.Blocks(title="Redrob Candidate Ranker") as demo:
                 kpi_avg = gr.HTML('<div class="kpi-box"><div class="kpi-icon">📊</div><div class="kpi-val" style="color:#f59e0b;">0.000</div><div class="kpi-label">Avg. Score (Top N)</div></div>')
 
             output_text = gr.Markdown(
-                value="<div style='text-align:center; padding:40px; color:#9ca3af;'>📄<br><strong>No results yet</strong><br><small>Upload a JSONL file and click Rank Candidates to see ranked results.</small></div>"
+                value="<div style='text-align:center; padding:40px; color:#9ca3af;'>📄<br><strong>No results yet</strong><br><small>Upload a JSONL file and click Rank Candidates to see ranked results.</small></div>",
+                elem_classes="scrollable-results"
             )
 
     def process_and_update_kpis(*args):
