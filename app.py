@@ -93,10 +93,10 @@ def rank_uploaded_candidates(file_obj, requested_top_n=100, preview_count=20) ->
                     continue
 
     if not candidates:
-        return "❌ **Error:** No valid candidates found in the file.", None
+        return "-", "-", "-", "-", "❌ **Error:** No valid candidates found in the file.", None
 
     if len(candidates) > 500:
-        return "❌ **Error:** Demo limited to 500 candidates. Use the full ranker locally.", None
+        return "-", "-", "-", "-", "❌ **Error:** Demo limited to 500 candidates. Use the full ranker locally.", None
 
     # Encode candidates with richer text
     texts = [build_candidate_text(c) for c in candidates]
@@ -131,7 +131,7 @@ def rank_uploaded_candidates(file_obj, requested_top_n=100, preview_count=20) ->
     top = results[:top_n]
 
     if not top:
-        return "❌ **Error:** No candidates passed honeypot filter.", None
+        return "-", "-", "-", "-", "❌ **Error:** No candidates passed honeypot filter.", None
 
     max_s = top[0]["combined"]
     min_s = top[-1]["combined"]
@@ -155,7 +155,6 @@ def rank_uploaded_candidates(file_obj, requested_top_n=100, preview_count=20) ->
 
     # Build rich markdown preview
     preview_lines = [
-        f"### ✅ Ranked {top_n} candidates  |  🚫 {honeypot_count} honeypots filtered\n",
         "| Rank | ID | Title | YOE | Feature | Semantic | Behavioral | Score |",
         "|------|-----|-------|-----|---------|----------|------------|-------|",
     ]
@@ -173,82 +172,144 @@ def rank_uploaded_candidates(file_obj, requested_top_n=100, preview_count=20) ->
     if top_n > int(preview_count):
         preview_lines.append(f"\n*... and {top_n - int(preview_count)} more in the downloadable CSV*")
 
-    return "\n".join(preview_lines), tmp.name
+    # KPIs
+    total_cands = len(candidates) + honeypot_count
+    avg_score = sum(item["_norm_score"] for item in top) / len(top) if top else 0.0
+
+    return (
+        f"{total_cands:,}",
+        f"{honeypot_count:,}",
+        f"{top_n:,}",
+        f"{avg_score:.3f}",
+        "\n".join(preview_lines), 
+        tmp.name
+    )
 
 
 # ── Gradio UI ──
 
 CSS = """
-#header { text-align: center; margin-bottom: 1em; }
-#upload-col { background: var(--background-fill-secondary); border-radius: 12px; padding: 1em; }
-#results-col { background: var(--background-fill-secondary); border-radius: 12px; padding: 1em; }
+:root {
+    --primary: #7c3aed;
+    --primary-hover: #6d28d9;
+    --bg-main: #fafafa;
+    --card-bg: #ffffff;
+    --border-color: #f3f4f6;
+}
+body { background-color: var(--bg-main) !important; font-family: 'Inter', sans-serif; }
+#top-nav { display: flex; justify-content: space-between; align-items: center; padding: 10px 20px; background: white; border-bottom: 1px solid #eaeaea; }
+#nav-links { display: flex; gap: 20px; font-weight: 500; color: #4b5563; }
+#nav-links span.active { color: var(--primary); border-bottom: 2px solid var(--primary); padding-bottom: 5px; }
+.hero-title { font-size: 2em; font-weight: bold; margin-bottom: 5px; }
+.hero-title span { color: var(--primary); }
+.hero-subtitle { color: #6b7280; margin-bottom: 20px; }
+.card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 24px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); }
+.card-title { font-weight: 600; font-size: 1.2em; margin-bottom: 15px; display: flex; align-items: center; gap: 10px; }
+.step-circle { background: var(--primary); color: white; border-radius: 50%; width: 24px; height: 24px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.9em; font-weight: bold; }
+.rank-button { background: linear-gradient(90deg, #8b5cf6, #7c3aed) !important; color: white !important; font-weight: bold !important; border: none !important; border-radius: 8px !important; }
+.kpi-row { display: flex; justify-content: space-around; background: #fafafa; border: 1px solid #f3f4f6; border-radius: 8px; padding: 15px; margin-bottom: 20px; }
+.kpi-box { text-align: center; border-right: 1px solid #e5e7eb; flex: 1; }
+.kpi-box:last-child { border-right: none; }
+.kpi-val { font-size: 1.5em; font-weight: bold; color: var(--primary); }
+.kpi-label { font-size: 0.8em; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; }
+.kpi-icon { font-size: 1.2em; margin-bottom: 5px; }
 """
 
-with gr.Blocks(title="Redrob Candidate Ranker — Demo", css=CSS) as demo:
-    gr.Markdown("""
-    <div id="header">
-
-    # 🔍 Redrob Intelligent Candidate Ranker
-    **Intelligent Candidate Discovery & Ranking — Hackathon Submission**
-
-    Upload a JSONL file (up to 500 candidates) to see ranked results with full score breakdown.
-
+with gr.Blocks(title="Redrob Candidate Ranker", css=CSS) as demo:
+    gr.HTML("""
+    <div id="top-nav">
+        <div style="font-weight:bold; font-size:1.2em; display:flex; align-items:center; gap:8px;">
+            <span style="font-size:1.5em;">🔍</span> Redrob <span style="color:#7c3aed;">Ranker</span>
+        </div>
+        <div id="nav-links">
+            <span class="active">🏠 Home</span>
+            <span>💡 How It Works</span>
+            <span>🎯 Scoring</span>
+            <span>ℹ️ About</span>
+        </div>
+        <div>
+            <button style="background:#f3e8ff; color:#7c3aed; padding:8px 16px; border-radius:6px; font-weight:bold; border:none;">✨ AI-Powered Matching</button>
+        </div>
+    </div>
+    <div style="padding: 30px 20px;">
+        <div class="hero-title">Redrob Intelligent Candidate <span>Ranker</span></div>
+        <div class="hero-subtitle">Intelligent Candidate Discovery & Ranking — Hackathon Submission<br><br>Upload a JSONL file (up to 500 candidates) to see ranked results with full score breakdown.</div>
     </div>
     """)
 
-    with gr.Row():
-        with gr.Column(elem_id="upload-col"):
-            gr.Markdown("### 📁 Upload Candidates")
+    with gr.Row(elem_classes="container", style="padding: 0 20px;"):
+        with gr.Column(scale=1, elem_classes="card"):
+            gr.HTML('<div class="card-title"><span class="step-circle">1</span> Upload Candidates</div>')
+            gr.Markdown("<p style='color:#6b7280; font-size:0.9em;'>Upload a JSONL file containing candidate data (max 500 candidates).</p>")
+            
             file_input = gr.File(
-                label="Upload candidates JSONL (max 500 candidates)",
+                label="Drag & drop your JSONL file here",
                 file_types=[".jsonl", ".json"],
             )
-            top_n_input = gr.Slider(
-                minimum=1, 
-                maximum=500, 
-                value=100, 
-                step=1, 
-                label="Number of top candidates to return (in CSV)"
-            )
-            preview_count_input = gr.Slider(
-                minimum=10, 
-                maximum=100, 
-                value=25, 
-                step=1, 
-                label="Top N to display"
-            )
-            rank_btn = gr.Button("🚀 Rank Candidates", variant="primary", size="lg")
+            top_n_input = gr.Slider(minimum=1, maximum=500, value=100, step=1, label="Number of top candidates to return (in CSV)")
+            preview_count_input = gr.Slider(minimum=10, maximum=100, value=25, step=1, label="Top N to display")
+            rank_btn = gr.Button("🚀 Rank Candidates", elem_classes="rank-button", size="lg")
 
             gr.Markdown("""
-            ---
-            **Scoring Architecture:**
-            - 🏷️ **Title + Career** (28%) — explicit title lookup + career arc
-            - 🛠️ **Skills** (30%) — weighted by proficiency × usage duration
-            - 📅 **Experience** (18%) — sweet spot: 5–9 years
-            - 📍 **Location** (14%) — Pune/Noida preferred
-            - 🎓 **Education** (10%) — institution tier + field + certs
-            - 🤖 **Semantic** (45% weight) — BAAI/bge-small cosine similarity
-            - ⚡ **Behavioral** multiplier (0.4–1.0) — activity, responsiveness, GitHub
+            <div style="font-size:0.85em; color:#6b7280; margin-top:20px;">
+            <strong>Scoring Architecture:</strong><br>
+            • Title + Career (28%)<br>
+            • Skills (30%)<br>
+            • Experience (18%)<br>
+            • Location (14%)<br>
+            • Education (10%)<br>
+            • Semantic Search (45% weight)<br>
+            • Behavioral multiplier (0.4–1.0)
+            </div>
             """)
 
-        with gr.Column(elem_id="results-col"):
-            gr.Markdown("### 📊 Results")
+        with gr.Column(scale=2, elem_classes="card"):
+            with gr.Row():
+                gr.HTML('<div class="card-title"><span class="step-circle">2</span> Results</div>')
+                output_file = gr.File(label="⬇️ Download Full CSV", interactive=False)
+            
+            gr.Markdown("<p style='color:#6b7280; font-size:0.9em;'>Upload a file and click <strong>Rank Candidates</strong> to see results here.</p>")
+
+            with gr.Row(elem_classes="kpi-row"):
+                kpi_total = gr.HTML('<div class="kpi-box"><div class="kpi-icon">👥</div><div class="kpi-val">0</div><div class="kpi-label">Total Candidates</div></div>')
+                kpi_honey = gr.HTML('<div class="kpi-box"><div class="kpi-icon">🛡️</div><div class="kpi-val" style="color:#ef4444;">0</div><div class="kpi-label">Honeypots Filtered</div></div>')
+                kpi_top = gr.HTML('<div class="kpi-box"><div class="kpi-icon">🏆</div><div class="kpi-val" style="color:#10b981;">0</div><div class="kpi-label">Top Ranked</div></div>')
+                kpi_avg = gr.HTML('<div class="kpi-box"><div class="kpi-icon">📊</div><div class="kpi-val" style="color:#f59e0b;">0.000</div><div class="kpi-label">Avg. Score (Top N)</div></div>')
+
             output_text = gr.Markdown(
-                value="*Upload a JSONL file and click **Rank Candidates** to see results.*"
+                value="<div style='text-align:center; padding:40px; color:#9ca3af;'>📄<br><strong>No results yet</strong><br><small>Upload a JSONL file and click Rank Candidates to see ranked results.</small></div>"
             )
-            output_file = gr.File(label="⬇️ Download full ranked CSV")
+
+    def process_and_update_kpis(*args):
+        # We need to wrap the return to format the HTML KPIs properly
+        res = rank_uploaded_candidates(*args)
+        if len(res) == 2:  # Error returned as (string, None)
+            return (
+                '<div class="kpi-box"><div class="kpi-icon">👥</div><div class="kpi-val">-</div><div class="kpi-label">Total Candidates</div></div>',
+                '<div class="kpi-box"><div class="kpi-icon">🛡️</div><div class="kpi-val" style="color:#ef4444;">-</div><div class="kpi-label">Honeypots Filtered</div></div>',
+                '<div class="kpi-box"><div class="kpi-icon">🏆</div><div class="kpi-val" style="color:#10b981;">-</div><div class="kpi-label">Top Ranked</div></div>',
+                '<div class="kpi-box"><div class="kpi-icon">📊</div><div class="kpi-val" style="color:#f59e0b;">-</div><div class="kpi-label">Avg. Score (Top N)</div></div>',
+                res[0],
+                None
+            )
+        else:
+            t, h, tp, a, md, csv = res
+            return (
+                f'<div class="kpi-box"><div class="kpi-icon">👥</div><div class="kpi-val">{t}</div><div class="kpi-label">Total Candidates</div></div>',
+                f'<div class="kpi-box"><div class="kpi-icon">🛡️</div><div class="kpi-val" style="color:#ef4444;">{h}</div><div class="kpi-label">Honeypots Filtered</div></div>',
+                f'<div class="kpi-box"><div class="kpi-icon">🏆</div><div class="kpi-val" style="color:#10b981;">{tp}</div><div class="kpi-label">Top Ranked</div></div>',
+                f'<div class="kpi-box"><div class="kpi-icon">📊</div><div class="kpi-val" style="color:#f59e0b;">{a}</div><div class="kpi-label">Avg. Score (Top N)</div></div>',
+                md,
+                csv
+            )
 
     rank_btn.click(
-        fn=rank_uploaded_candidates,
+        fn=process_and_update_kpis,
         inputs=[file_input, top_n_input, preview_count_input],
-        outputs=[output_text, output_file],
+        outputs=[kpi_total, kpi_honey, kpi_top, kpi_avg, output_text, output_file],
     )
 
-    gr.Markdown("""
-    ---
-    *Demo limited to 500 candidates. Full submission uses precomputed embeddings for 100K candidates.*
-    *Scoring is consistent with the full ranker — feature weights, behavioral multiplier, and semantic scoring all match.*
-    """)
+    gr.HTML("<div style='text-align:center; padding:20px; color:#9ca3af; font-size:0.85em; border-top:1px solid #eaeaea; margin-top:20px;'>Built for <strong>IndiaRuns Hackathon 2025</strong> | AI-Powered Candidate Ranking System</div>")
 
 if __name__ == "__main__":
     demo.launch()
